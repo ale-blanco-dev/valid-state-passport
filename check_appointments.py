@@ -5,10 +5,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import requests
 import time
+import os
 
-# ⚙️ Configura estos valores con los tuyos
-BOT_TOKEN = "8160446146:AAHW9r5t9UJpUgapNo71C2hkZW2OCA01Vug"
-CHAT_ID = "1641635081"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 def send_telegram_message(message):
     ##url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
