@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.service import Service
 
 import requests
 import time
@@ -37,7 +38,10 @@ def check_availability():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
-    driver = webdriver.Chrome(options=chrome_options)
+    # 🚨 Asegura que Chrome está en la ruta esperada
+    chrome_options.binary_location = "/usr/bin/google-chrome"
+
+    driver = webdriver.Chrome(service=Service(), options=chrome_options)
     wait = WebDriverWait(driver, 15)
 
     try:
