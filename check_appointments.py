@@ -1,26 +1,31 @@
+import os
+import time
+import requests
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.chrome.service import Service
 
-import requests
-import time
-import os
-import shutil
-
+# === Variables de entorno obligatorias ===
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
+CHROME_BIN = os.getenv("CHROME_BIN", "/opt/google/chrome/google-chrome")
+CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH", "/usr/local/bin/chromedriver")
 
-def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        print("✅ Mensaje enviado por Telegram")
-    else:
-        print(f"❌ Error al enviar mensaje: {response.status_code} - {response.text}")
+if not BOT_TOKEN or not CHAT_ID:
+    raise EnvironmentError("BOT_TOKEN y CHAT_ID deben estar definidos en las variables de entorno.")
+
+# === Utilidades ===
+def send_telegram_message(message: str):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": CHAT_ID, "text": message}
+    response = requests.get(url, params=payload)
+    status = "Mensaje enviado" if response.ok else f"Error al enviar mensaje: {response.status_code} - {response.text}"
+    print(status)
 
 def click_element_js(driver, element):
     try:
@@ -28,74 +33,64 @@ def click_element_js(driver, element):
         driver.execute_script("arguments[0].click();", element)
         return True
     except Exception as e:
-        print(f"❌ Error al hacer clic con JS: {e}")
+        print(f"Error al hacer clic con JS: {e}")
         return False
 
 def get_chrome_options():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.binary_location = "/opt/google/chrome/google-chrome"
-    return chrome_options  # 👈🏼 ¡Este return es obligatorio!
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.binary_location = CHROME_BIN
+    return options
 
+# === Lógica principal ===
 def check_availability():
-    print("🟡 Iniciando revisión de citas x5...")
+    print("Iniciando revisión de citas...")
 
     driver = webdriver.Chrome(
-        service=Service("/usr/local/bin/chromedriver"),
+        service=Service(CHROMEDRIVER_PATH),
         options=get_chrome_options()
     )
-    
     wait = WebDriverWait(driver, 15)
 
     try:
         driver.get("https://agendacitas.cancilleria.gov.co/agendamiento-citas/agendamiento/agendamiento.xhtml")
         time.sleep(2)
 
-        try:
-            texto = driver.find_element(By.ID, "datosPrivacidadHeader").text
-            if "Privacidad" in texto:
-                print("✅ Texto de privacidad encontrado.")
-            else:
-                print("❌ Texto de privacidad no detectado.")
-        except NoSuchElementException:
-            print("❌ Elemento de privacidad no encontrado.")
+        if "Privacidad" not in driver.find_element(By.ID, "datosPrivacidadHeader").text:
+            print("Texto de privacidad no detectado.")
             return
+        print("Texto de privacidad encontrado.")
 
-        button_pre_consultar = wait.until(EC.presence_of_element_located((By.ID, "buttonPreConsultar")))
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight - 1000)")
-        print("✅ Página scrolleada.")
-
-        check_box = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@id='idAutorizaEnvioDatos']//div[contains(@class, 'ui-chkbox-box')]")))
-        click_element_js(driver, check_box)
-        print("✅ Checkbox clickeado.")
+        click_element_js(driver, wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@id='idAutorizaEnvioDatos']//div[contains(@class, 'ui-chkbox-box')]"))))
+        print("Checkbox clickeado.")
 
         time.sleep(1)
-        click_element_js(driver, button_pre_consultar)
-        print("✅ Botón 'Consultar' presionado.")
+        click_element_js(driver, wait.until(EC.element_to_be_clickable((By.ID, "buttonPreConsultar"))))
+        print("Botón 'Consultar' presionado.")
 
-        button_agendar = wait.until(EC.element_to_be_clickable((By.ID, "btAgendar")))
         time.sleep(3)
-        click_element_js(driver, button_agendar)
-        print("✅ Botón 'Agendar' presionado.")
+        click_element_js(driver, wait.until(EC.element_to_be_clickable((By.ID, "btAgendar"))))
+        print("Botón 'Agendar' presionado.")
 
-        button_oficina = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[span[contains(text(),'Oficina Sede Centro')]]")))
         time.sleep(3)
-        click_element_js(driver, button_oficina)
-        print("✅ Botón 'Oficina Sede Centro' presionado.")
+        click_element_js(driver, wait.until(EC.element_to_be_clickable((By.XPATH, "//button[span[contains(text(),'Oficina Sede Centro')]]"))))
+        print("Botón 'Oficina Sede Centro' presionado.")
 
         time.sleep(2)
         try:
             driver.find_element(By.XPATH, "//span[contains(text(), 'No hay citas disponibles')]")
-            send_telegram_message("❌ No hay citas disponibles en este momento.")
+            send_telegram_message("No hay citas disponibles en este momento.")
         except NoSuchElementException:
-            send_telegram_message("🚨 ¡Posible disponibilidad de citas! Revisa el sistema.")
+            send_telegram_message("Posible disponibilidad de citas. Revisa el sistema.")
+
     except Exception as e:
-        print(f"❌ Error general: {e}")
+        print(f"Error general: {e}")
+        send_telegram_message(f"Error en ejecución del script: {e}")
     finally:
         driver.quit()
-        print("🔚 Revisión finalizada.")
+        print("Revisión finalizada.")
 
 if __name__ == "__main__":
     check_availability()
