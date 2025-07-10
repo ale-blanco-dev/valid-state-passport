@@ -35,7 +35,7 @@ jobs:
       - name: Install ChromeDriver from apt
         run: |
           sudo apt-get install -y chromium-chromedriver
-          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
+          sudo ln -sf /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
 
       - name: Run script
         run: python check_appointments.py

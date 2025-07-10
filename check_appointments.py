@@ -31,17 +31,16 @@ def click_element_js(driver, element):
         return False
 
 def check_availability():
-    print("🟡 Iniciando revisión de citas x3...")
+    print("🟡 Iniciando revisión de citas x4...")
 
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-
-    # 🚨 Asegura que Chrome está en la ruta esperada
-    chrome_options.binary_location = "/usr/bin/google-chrome"
-
-    driver = webdriver.Chrome(service=Service(), options=chrome_options)
+    chrome_options.binary_location = "/opt/google/chrome/google-chrome"
+    
+    driver = webdriver.Chrome(service=Service("/usr/local/bin/chromedriver"), options=chrome_options)
+    
     wait = WebDriverWait(driver, 15)
 
     try:
