@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.service import Service
 import requests
 import time
 import os
+import shutil
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -30,17 +31,21 @@ def click_element_js(driver, element):
         print(f"❌ Error al hacer clic con JS: {e}")
         return False
 
-def check_availability():
-    print("🟡 Iniciando revisión de citas x4...")
+def get_chrome_options():
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.binary_location = shutil.which("google-chrome") or shutil.which("chrome") or "/usr/bin/google-chrome"
+    return options
 
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.binary_location = "/opt/google/chrome/google-chrome"
-    
-    driver = webdriver.Chrome(service=Service("/usr/local/bin/chromedriver"), options=chrome_options)
-    
+def check_availability():
+    print("🟡 Iniciando revisión de citas...")
+
+    driver = webdriver.Chrome(
+        service=Service("/usr/local/bin/chromedriver"),
+        options=get_chrome_options()
+    )
     wait = WebDriverWait(driver, 15)
 
     try:
@@ -78,7 +83,6 @@ def check_availability():
         time.sleep(3)
         click_element_js(driver, button_oficina)
         print("✅ Botón 'Oficina Sede Centro' presionado.")
-
 
         time.sleep(2)
         try:
