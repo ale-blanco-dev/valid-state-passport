@@ -40,7 +40,7 @@ def get_chrome_options():
     return chrome_options  # 👈🏼 ¡Este return es obligatorio!
 
 def check_availability():
-    print("🟡 Iniciando revisión de citas...")
+    print("🟡 Iniciando revisión de citas x5...")
 
     driver = webdriver.Chrome(
         service=Service("/usr/local/bin/chromedriver"),
