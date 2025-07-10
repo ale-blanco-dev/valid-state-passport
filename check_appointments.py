@@ -13,7 +13,7 @@ from selenium.common.exceptions import NoSuchElementException
 # === Variables de entorno obligatorias ===
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-CHROME_BIN = os.getenv("CHROME_BIN", "/opt/google/chrome/google-chrome")
+CHROME_BIN = os.getenv("CHROME_BIN")
 CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH", "/usr/local/bin/chromedriver")
 
 if not BOT_TOKEN or not CHAT_ID:
