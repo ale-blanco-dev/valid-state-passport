@@ -32,12 +32,12 @@ def click_element_js(driver, element):
         return False
 
 def get_chrome_options():
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.binary_location = shutil.which("google-chrome") or shutil.which("chrome") or "/usr/bin/google-chrome"
-    return options
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.binary_location = "/opt/google/chrome/google-chrome"
+    return chrome_options  # 👈🏼 ¡Este return es obligatorio!
 
 def check_availability():
     print("🟡 Iniciando revisión de citas...")
@@ -46,6 +46,7 @@ def check_availability():
         service=Service("/usr/local/bin/chromedriver"),
         options=get_chrome_options()
     )
+    
     wait = WebDriverWait(driver, 15)
 
     try:
