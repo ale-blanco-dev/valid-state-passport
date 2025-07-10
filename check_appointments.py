@@ -31,7 +31,7 @@ def click_element_js(driver, element):
         return False
 
 def check_availability():
-    print("🟡 Iniciando revisión de citas x2...")
+    print("🟡 Iniciando revisión de citas x3...")
 
     chrome_options = Options()
     chrome_options.add_argument("--headless")
