@@ -2,7 +2,7 @@ name: Check Appointments
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # cada 15 minutos
+    - cron: '*/15 * * * *'  # Cada 15 minutos
   workflow_dispatch:
 
 jobs:
@@ -26,17 +26,28 @@ jobs:
 
       - name: Install Google Chrome and ChromeDriver
         run: |
+          # Agrega repositorio oficial de Chrome
           wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
           sudo apt-get update
+
+          # Instala Chrome estable y unzip
           sudo apt-get install -y google-chrome-stable unzip
-          CHROME_VERSION=$(google-chrome-stable --version | grep -oP '\d+\.\d+\.\d+' | head -1)
-          DRIVER_VERSION=$(wget -q -O - https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION%.*})
+
+          # Descarga última versión estable de ChromeDriver
+          DRIVER_VERSION=$(wget -q -O - https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
           wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
+
+          # Exporta rutas para usarlas en Python
           echo "CHROMEDRIVER_PATH=/usr/local/bin/chromedriver" >> $GITHUB_ENV
           echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+
+      - name: Verify versions (opcional)
+        run: |
+          google-chrome --version
+          chromedriver --version
 
       - name: Run script
         run: python check_appointments.py
