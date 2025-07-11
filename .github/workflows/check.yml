@@ -1,0 +1,52 @@
+name: Check Appointments
+
+on:
+  schedule:
+    - cron: '10 22 1 * *'  # Cada mes (30 días)
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      CHAT_ID: ${{ secrets.CHAT_ID }}
+      CITA_URL: ${{ secrets.CITA_URL }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg unzip
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Verify versions (opcional)
+        run: |
+          echo "Google Chrome version:"
+          google-chrome --version || google-chrome-stable --version
+          
+          echo "ChromeDriver version:"
+          chromedriver --version
+
+      - name: Run script
+        run: python check_appointments.py
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-report
+          path: ui_test_report.html
