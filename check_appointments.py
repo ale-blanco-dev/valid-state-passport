@@ -56,6 +56,9 @@ def get_chrome_options():
 
 def check_availability():
     print("Iniciando revisión de citas...")
+    driver = None
+    status = "Éxito"
+    details = "Citas disponibles encontradas."
 
     try:
         driver = webdriver.Chrome(options=get_chrome_options())
@@ -68,13 +71,15 @@ def check_availability():
         text = driver.find_element(By.ID, "datosPrivacidadHeader").text.strip().lower()
         if "privacidad" not in text:
             print("Texto de privacidad no detectado.")
+            status = "Falló"
+            details = "Texto de privacidad no detectado en la página."
             return
+
         print("Texto de privacidad encontrado.")
 
-
+        # Flujo
         click_element_js(driver, wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//div[@id='idAutorizaEnvioDatos']//div[contains(@class, 'ui-chkbox-box')]")
-        )))
+            (By.XPATH, "//div[@id='idAutorizaEnvioDatos']//div[contains(@class, 'ui-chkbox-box')]"))))
         print("Checkbox 'Autoriza envío' clickeado.")
 
         time.sleep(1)
@@ -87,8 +92,7 @@ def check_availability():
 
         time.sleep(3)
         click_element_js(driver, wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//button[span[contains(text(),'Oficina Sede Centro')]]")
-        )))
+            (By.XPATH, "//button[span[contains(text(),'Oficina Sede Centro')]]"))))
         print("Botón 'Oficina Sede Centro' presionado.")
 
         time.sleep(2)
@@ -97,21 +101,29 @@ def check_availability():
             driver.find_element(By.XPATH, "//span[contains(text(), 'No hay citas disponibles')]")
             print("No hay citas disponibles.")
             send_telegram_message("No hay citas disponibles en este momento.")
+            details = "No hay citas disponibles en el sistema."
         except NoSuchElementException:
             print("¡Podrían haber citas disponibles!")
-            send_telegram_message("Posible disponibilidad de citas. Revisa el sistema.")
+            send_telegram_message("✅ Posible disponibilidad de citas. Revisa el sistema.")
+            details = "¡Parece que hay citas disponibles!"
 
     except Exception as e:
         print(f"Error general: {e}")
-        send_telegram_message(f"Error en ejecución del script. Posible fallo en el sistema de agendamiento de citas!: {e}")
-        write_html_report("Falló", f"Error: {e}")
+        send_telegram_message(f"❌ Error en ejecución del script: {e}")
+        status = "Falló"
+        details = f"Excepción: {e}"
+        if driver:
+            driver.save_screenshot("screenshot.png")
+            print("📸 Captura tomada tras el fallo.")
+
     finally:
-        def take_screenshot(driver, filename="screenshot.png"):
-            driver.save_screenshot(filename)
-            print(f"📸 Captura tomada: {filename}")
-        driver.quit()
-        print("Navegador cerrado. Revisión finalizada.")
-        write_html_report("Éxito", "Citas disponibles encontradas.")
+        if driver:
+            driver.quit()
+            print("Navegador cerrado.")
+        else:
+            print("Driver no fue inicializado.")
+
+        write_html_report(status, details, "screenshot.png" if status == "Falló" else None)
 
 def click_element_js(driver, element):
     try:
