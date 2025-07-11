@@ -65,10 +65,12 @@ def check_availability():
         print("Página cargada correctamente.")
         time.sleep(5)
 
-        if "Privacidad" not in driver.find_element(By.ID, "datosPrivacidadHeader").text:
+        text = driver.find_element(By.ID, "datosPrivacidadHeader").text.strip().lower()
+        if "privacidad" not in text:
             print("Texto de privacidad no detectado.")
             return
         print("Texto de privacidad encontrado.")
+
 
         click_element_js(driver, wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@id='idAutorizaEnvioDatos']//div[contains(@class, 'ui-chkbox-box')]")
@@ -104,6 +106,9 @@ def check_availability():
         send_telegram_message(f"Error en ejecución del script. Posible fallo en el sistema de agendamiento de citas!: {e}")
         write_html_report("Falló", f"Error: {e}")
     finally:
+        def take_screenshot(driver, filename="screenshot.png"):
+            driver.save_screenshot(filename)
+            print(f"📸 Captura tomada: {filename}")
         driver.quit()
         print("Navegador cerrado. Revisión finalizada.")
         write_html_report("Éxito", "Citas disponibles encontradas.")
@@ -117,22 +122,43 @@ def click_element_js(driver, element):
         print(f"Error al hacer clic con JS: {e}")
         return False
 
-def write_html_report(status: str, details: str):
+def write_html_report(status: str, details: str, screenshot_path: str = None):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     template_str = """
     <html>
-      <head><title>UI Test Report</title></head>
+      <head>
+        <title>UI Test Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+          h1 { color: #333; }
+          .status { font-size: 1.2em; margin-bottom: 20px; }
+          .screenshot img { max-width: 100%; border: 1px solid #ccc; }
+          pre { background: #eee; padding: 10px; border-radius: 5px; }
+        </style>
+      </head>
       <body>
         <h1>Estado de la revisión: {{ status }}</h1>
         <p><strong>Fecha:</strong> {{ timestamp }}</p>
-        <p><strong>Detalles:</strong></p>
+        <div class="status"><strong>Detalles:</strong></div>
         <pre>{{ details }}</pre>
+        {% if screenshot_path %}
+        <div class="screenshot">
+          <h2>Captura de pantalla:</h2>
+          <img src="{{ screenshot_path }}" alt="screenshot">
+        </div>
+        {% endif %}
       </body>
     </html>
     """
     template = Template(template_str)
-    html_content = template.render(status=status, timestamp=timestamp, details=details)
+    html_content = template.render(
+        status=status,
+        timestamp=timestamp,
+        details=details,
+        screenshot_path=screenshot_path
+    )
     with open("ui_test_report.html", "w", encoding="utf-8") as f:
         f.write(html_content)
+    print("Reporte HTML generado: ui_test_report.html")
 if __name__ == "__main__":
     check_availability()
