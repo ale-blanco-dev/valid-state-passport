@@ -66,7 +66,7 @@ def check_availability():
 
         driver.get("https://agendacitas.cancilleria.gov.co/agendamiento-citas/agendamiento/agendamiento.xhtml")
         print("Página cargada correctamente.")
-        time.sleep(5)
+        time.sleep(25)
 
         text = driver.find_element(By.ID, "datosPrivacidadHeader").text.strip().lower()
         if "privacidad" not in text:
