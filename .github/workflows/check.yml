@@ -19,34 +19,25 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.13'
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Install Google Chrome and ChromeDriver
+      - name: Install Google Chrome
         run: |
-          # Agrega repositorio oficial de Chrome
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
           sudo apt-get update
-
-          # Instala Chrome estable y unzip
-          sudo apt-get install -y google-chrome-stable unzip
-
-          # Descarga última versión estable de ChromeDriver
-          DRIVER_VERSION=$(wget -q -O - https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-          wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-
-          # Exporta rutas para usarlas en Python
-          echo "CHROMEDRIVER_PATH=/usr/local/bin/chromedriver" >> $GITHUB_ENV
-          echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+          sudo apt-get install -y wget gnupg unzip
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg
+          echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
 
       - name: Verify versions (opcional)
         run: |
-          google-chrome --version
+          echo "🔍 Google Chrome version:"
+          google-chrome --version || google-chrome-stable --version
+          echo "🔍 ChromeDriver version:"
           chromedriver --version
 
       - name: Run script
