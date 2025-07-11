@@ -2,7 +2,7 @@ name: Check Appointments
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Cada 15 minutos
+    - cron: '10 22 1 * *'  # Cada mes (30 días)
   workflow_dispatch:
 
 jobs:
@@ -49,7 +49,7 @@ jobs:
 
       - name: Run script
         run: python check_appointments.py
-        
+
       - name: Upload HTML report
         uses: actions/upload-artifact@v4
         with:
