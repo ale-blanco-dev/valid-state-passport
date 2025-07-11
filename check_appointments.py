@@ -56,10 +56,7 @@ def check_availability():
     print("Iniciando revisión de citas...")
 
     try:
-        driver = webdriver.Chrome(
-            service=Service(CHROMEDRIVER_PATH),
-            options=get_chrome_options()
-        )
+        driver = webdriver.Chrome(options=get_chrome_options())
         wait = WebDriverWait(driver, 15)
 
         driver.get("https://agendacitas.cancilleria.gov.co/agendamiento-citas/agendamiento/agendamiento.xhtml")

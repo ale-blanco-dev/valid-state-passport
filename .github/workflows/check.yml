@@ -37,8 +37,15 @@ jobs:
         run: |
           echo "🔍 Google Chrome version:"
           google-chrome --version || google-chrome-stable --version
+          
           echo "🔍 ChromeDriver version:"
           chromedriver --version
+          
+          echo "🔍 Ruta y permisos de ChromeDriver:"
+          ls -l /usr/local/bin/chromedriver || echo "❌ No existe en /usr/local/bin"
+
+          echo "🔍 Localización en el PATH:"
+          which chromedriver || which chromedriver-stable || echo "❌ No está en el PATH"
 
       - name: Run script
         run: python check_appointments.py
