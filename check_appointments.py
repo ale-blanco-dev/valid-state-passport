@@ -9,6 +9,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
+from jinja2 import Template
+from datetime import datetime
 
 
 
@@ -61,15 +63,13 @@ def check_availability():
 
         driver.get("https://agendacitas.cancilleria.gov.co/agendamiento-citas/agendamiento/agendamiento.xhtml")
         print("Página cargada correctamente.")
-        time.sleep(2)
+        time.sleep(5)
 
-        # Verifica si aparece la sección de privacidad
         if "Privacidad" not in driver.find_element(By.ID, "datosPrivacidadHeader").text:
             print("Texto de privacidad no detectado.")
             return
         print("Texto de privacidad encontrado.")
 
-        # Flujo de clicks
         click_element_js(driver, wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//div[@id='idAutorizaEnvioDatos']//div[contains(@class, 'ui-chkbox-box')]")
         )))
@@ -101,10 +101,12 @@ def check_availability():
 
     except Exception as e:
         print(f"Error general: {e}")
-        send_telegram_message(f"Error en ejecución del script: {e}")
+        send_telegram_message(f"Error en ejecución del script. Posible fallo en el sistema de agendamiento de citas!: {e}")
+        write_html_report("Falló", f"Error: {e}")
     finally:
         driver.quit()
         print("Navegador cerrado. Revisión finalizada.")
+        write_html_report("Éxito", "Citas disponibles encontradas.")
 
 def click_element_js(driver, element):
     try:
@@ -115,5 +117,22 @@ def click_element_js(driver, element):
         print(f"Error al hacer clic con JS: {e}")
         return False
 
+def write_html_report(status: str, details: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    template_str = """
+    <html>
+      <head><title>UI Test Report</title></head>
+      <body>
+        <h1>Estado de la revisión: {{ status }}</h1>
+        <p><strong>Fecha:</strong> {{ timestamp }}</p>
+        <p><strong>Detalles:</strong></p>
+        <pre>{{ details }}</pre>
+      </body>
+    </html>
+    """
+    template = Template(template_str)
+    html_content = template.render(status=status, timestamp=timestamp, details=details)
+    with open("ui_test_report.html", "w", encoding="utf-8") as f:
+        f.write(html_content)
 if __name__ == "__main__":
     check_availability()
